@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
 
 	// 額外判斷 real network or classbench
 	if (argc <= 1) {
-		strcpy(net_name, "table");
+		strcpy(net_name, "router_name");
 	}
 	else if (argc == 2) {
 		strcpy(net_name, argv[1]);

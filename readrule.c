@@ -7,25 +7,27 @@
 #define FREE(ptr) {free(ptr); ptr=NULL;}
 int *num_acl, *num_rule, rule_none;
 struct ENTRY **ACL_TABLE;
-
+static int totalrule = 0;
 static void set_rule(char *str, int tableID, int id) {
     char *s, tok[] = "',";
     int  c;
 
-    str += 2;
+    str += 3;
     ACL_TABLE[tableID][num_acl[tableID]].ID = id;
 
     struct RULE head;
     struct RULE *listPtr = &head;
     s = strtok(str, tok);
-
+    unsigned int len, tmp;
     while (1) {
-        c = 0;
+        c = -1;
 
         if (!strcmp(s, "transport_src_end")) {
             listPtr->next = (struct RULE *) malloc (sizeof(struct RULE));
             listPtr->next->next = NULL;
             num_rule[tableID]++;
+
+            totalrule++;
             c = 0;
         }
         if (!strcmp(s, "ip_protocol"        )) c = 1;
@@ -60,9 +62,21 @@ static void set_rule(char *str, int tableID, int id) {
             break;
         case 5:
             sscanf(s, "%u", &listPtr->srcmask);
+            len = 32, tmp = listPtr->srcmask;
+            while (tmp) {
+                len--;
+                tmp >>= 1;
+            }
+            listPtr->srclen = len;
             break;
         case 6:
             sscanf(s, "%u", &listPtr->dstmask);
+            len = 32, tmp = listPtr->dstmask;
+            while (tmp) {
+                len--;
+                tmp >>= 1;
+            }
+            listPtr->dstlen = len;
             break;
         case 7:
             sscanf(s, "%u", &listPtr->dstPort[0]);
@@ -116,7 +130,7 @@ static void read_rule(char *table_name, int tableID) {
 
     fclose(fp);
 }
-static int totalrule = 0;
+
 static void computeACLBDDs(int num_entry, struct ENTRY *table) {
     int i;
 
